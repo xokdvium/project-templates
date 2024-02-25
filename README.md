@@ -22,7 +22,7 @@ cd mycoolproject
 nix flake init -t "github:xokdvium/project-templates#cpp"
 ```
 
-Each reposity contains a `justfile` with basic functionality to run 
+Each repository contains a `justfile` with basic functionality to run 
 linters and formatters via [lint-nix](https://github.com/xc-jp/lint.nix).
 
 Basic usage:
