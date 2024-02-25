@@ -11,7 +11,7 @@ Currently supported languages:
   - Static analysis - [clang-tidy](https://clang.llvm.org/extra/clang-tidy/)
 - [x] Ruby
 - [x] Rust
-- [] Nix
+- [ ] Nix
 
 ## How to use 📖
 
