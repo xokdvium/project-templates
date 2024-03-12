@@ -1,73 +1,32 @@
 {
-  inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
-    lint-nix.url = "github:xc-jp/lint.nix";
+  description = "My project templates for various languages";
 
-    mini-compile-commands = {
-      url = "github:danielbarter/mini_compile_commands";
-      flake = false;
+  inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    flake-parts.url = "github:hercules-ci/flake-parts";
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = {
-    self,
-    nixpkgs,
-    flake-utils,
-    ...
-  } @ inputs: let
-    systems = ["x86_64-linux" "aarch64-linux"];
-  in
-    flake-utils.lib.eachSystem systems (system: let
-      pkgs = import nixpkgs {
-        inherit system;
-        overlays = [];
-      };
+  outputs =
+    { flake-parts, treefmt-nix, ... }@inputs:
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      imports = [ treefmt-nix.flakeModule ];
 
-      clang-tools = pkgs.clang-tools_17;
-      lints = inputs.lint-nix.lib.lint-nix {
-        inherit pkgs;
-        src = ./.;
+      systems = [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
 
-        linters = {
-          ruff = {
-            ext = ".py";
-            cmd = "${pkgs.ruff}/bin/ruff $filename";
-          };
-        };
-
-        formatters = {
-          clang-format = {
-            ext = [".c" ".cpp" ".h" ".hpp" ".cc"];
-            cmd = "${clang-tools}/bin/clang-format";
-            stdin = true;
-          };
-
-          black = {
-            ext = ".py";
-            cmd = "${pkgs.black}/bin/black $filename";
-          };
-        };
-      };
-
-      devShell =
-        (pkgs.mkShell.override {
-          stdenv = pkgs.llvmPackages_17.stdenv;
-        }) {
-          nativeBuildInputs = with pkgs; [
-            cmake
-            python311
-            doxygen
-            ninja
-            clang-tools
-            act
-            just
-            addlicense
+      perSystem =
+        { ... }:
+        {
+          imports = [
+            ./nix/treefmt.nix
+            ./nix/persystem.nix
           ];
         };
-    in {
-      devShells = {default = devShell;};
-      legacyPackages = {} // lints;
-      formatter = pkgs.alejandra;
-    });
+    };
 }

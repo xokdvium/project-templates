@@ -3,46 +3,34 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    lint-nix.url = "github:xc-jp/lint.nix";
-    flake-utils.url = "github:numtide/flake-utils";
+    flake-parts.url = "github:hercules-ci/flake-parts";
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = {
-    self,
-    nixpkgs,
-    flake-utils,
-    lint-nix,
-  } @ inputs: let
-    inherit (self) outputs;
-    lib = nixpkgs.lib.extend (_: _: import ./lib {inherit inputs outputs;});
-    systems = ["x86_64-linux" "aarch64-linux"];
-  in
-    flake-utils.lib.eachSystem systems (system: let
-      pkgs = nixpkgs.legacyPackages.${system};
-      lints = lib.lints pkgs ./.;
-    in {
-      formatter = pkgs.alejandara;
-      legacyPackages = {} // lints;
-      devShells.default = pkgs.mkShell {
-        nativeBuildInputs = with pkgs; [just fd act];
-      };
-    })
-    // {
-      templates = {
-        cpp = {
-          path = ./cpp;
-          description = "C++ project template";
-        };
+  outputs =
+    { flake-parts, treefmt-nix, ... }@inputs:
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      imports = [
+        treefmt-nix.flakeModule
 
-        ruby = {
-          path = ./ruby;
-          description = "Ruby project template";
-        };
+        ./nix/templates.nix
+      ];
 
-        rust = {
-          path = ./rust;
-          description = "Rust project template";
+      systems = [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
+
+      perSystem =
+        { ... }:
+        {
+          imports = [
+            ./nix/treefmt.nix
+            ./nix/persystem.nix
+          ];
         };
-      };
     };
 }

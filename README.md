@@ -5,13 +5,13 @@ several languages. All of the templates are exposes via a nix flake.
 
 Currently supported languages:
 
-- [x] C/C++
+- \[x\] C/C++
   - Build system is [CMake](https://cmake.org/)
   - Formatter - [clang-format](https://clang.llvm.org/docs/ClangFormat.html)
   - Static analysis - [clang-tidy](https://clang.llvm.org/extra/clang-tidy/)
-- [x] Ruby
-- [x] Rust
-- [ ] Nix
+- \[x\] Ruby
+- \[x\] Rust
+- \[ \] Nix
 
 ## How to use 📖
 
@@ -22,7 +22,7 @@ cd mycoolproject
 nix flake init -t "github:xokdvium/project-templates#cpp"
 ```
 
-Each repository contains a `justfile` with basic functionality to run 
+Each repository contains a `justfile` with basic functionality to run
 linters and formatters via [lint-nix](https://github.com/xc-jp/lint.nix).
 
 Basic usage:

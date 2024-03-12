@@ -1,86 +1,32 @@
 {
+  description = "My project templates for various languages";
+
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
-    lint-nix.url = "github:xc-jp/lint.nix";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    flake-parts.url = "github:hercules-ci/flake-parts";
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = {
-    self,
-    nixpkgs,
-    flake-utils,
-    ...
-  } @ inputs: let
-    systems = ["x86_64-linux" "aarch64-linux"];
-  in
-    flake-utils.lib.eachSystem systems (system: let
-      pkgs = import nixpkgs {
-        inherit system;
-        overlays = [];
-      };
+  outputs =
+    { flake-parts, treefmt-nix, ... }@inputs:
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      imports = [ treefmt-nix.flakeModule ];
 
-      lints = inputs.lint-nix.lib.lint-nix rec {
-        inherit pkgs;
-        src = ./.;
-
-        linters = {
-        };
-
-        formatters = {
-          rustfmt = {
-            ext = ".rs";
-            cmd = "${pkgs.rustfmt}/bin/rustfmt --config-path ${src} $filename";
-          };
-        };
-      };
-
-      cargoToml = builtins.fromTOML (builtins.readFile ./Cargo.toml);
-      rustToolchain = pkgs.symlinkJoin {
-        name = "rustToolchain";
-        paths = with pkgs; [
-          rustc
-          cargo
-          cargo-watch
-          rust-analyzer
-          rustPlatform.rustcSrc
-        ];
-      };
-
-      nonRustDeps = with pkgs; [
+      systems = [
+        "x86_64-linux"
+        "aarch64-linux"
       ];
 
-      devShell = pkgs.mkShell {
-        nativeBuildInputs = with pkgs; [
-          rustToolchain
-          just
-        ];
-
-        buildInputs = [] ++ nonRustDeps;
-
-        RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
-        RUST_BACKTRACE = "full";
-      };
-    in {
-      devShells = {
-        default = devShell;
-      };
-
-      packages = {
-        inherit
-          (lints)
-          all-checks
-          all-formats
-          all-lints
-          format-all
-          ;
-
-        default = pkgs.rustPlatform.buildRustPackage {
-          inherit (cargoToml.package) name version;
-          src = ./.;
-          cargoLock.lockFile = ./Cargo.lock;
+      perSystem =
+        { ... }:
+        {
+          imports = [
+            ./nix/treefmt.nix
+            ./nix/persystem.nix
+          ];
         };
-      };
-
-      formatter = pkgs.alejandra;
-    });
+    };
 }
